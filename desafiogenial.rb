@@ -1,34 +1,77 @@
-module BusinessRules
-  ELIGIBLE_DIAGNOSES = ["A", "B", "C"]
-  MAX_ELIGIBLE_AGE = 5
-end
-
 class Child
-  include BusinessRules
-  private attr_reader :age, :diagnosis
+  @@id = 1
+  attr_reader :id
+  attr_accessor :name, :age, :diagnosis, :health_plan, :caregivers, :caregiver_id
 
-  def initialize (age, diagnosis = nil)
+  def initialize(name, age, diagnosis = false, health_plan = nil)
+    @name = name
     @age = age
     @diagnosis = diagnosis
-  end
-
-  def eligible?
-    if age <= MAX_ELIGIBLE_AGE && ELIGIBLE_DIAGNOSES.include?(diagnosis)
-      return true 
-    else
-      return false 
-    end
+    @health_plan = health_plan
+    @caregivers = 0
+    @id = @@id
+    @@id += 1
+    @caregiver_id = []
   end
 end
 
-a = Child.new(2)
-b = Child.new(10)
-c = Child.new(3,"A")
-d = Child.new(3,"E")
-e = Child.new(10,"B")
+class Caregiver
+  @@id = 1
+  attr_reader :child_id
+  attr_accessor :name, :income, :employed
 
-puts a.eligible?
-puts b.eligible?
-puts c.eligible?
-puts d.eligible?
-puts e.eligible?
+  def initialize(child, name, income, employed)
+    @child_id = child.id
+    child.caregivers += 1
+    child.caregiver_id << @@id
+    @name = name
+    @income = income
+    @employed = employed
+    @@id += 1
+  end
+end
+
+class BusinessRulesValidation
+  MAX_ELIGIBLE_AGE = 5
+  MIN_INCOME = 10000 #in case of particular payment
+  ELIGIBLE_HEALTH_PLANS = ["Alice", "GNDI"]
+  EMPLOYED_CARETAKERS = 2
+
+  def eligible_age?(child)
+    return true if child.age <= MAX_ELIGIBLE_AGE
+    return false
+  end
+
+  def eligible_health_plan?(child)
+    return true if ELIGIBLE_HEALTH_PLANS.include?(child.health_plan)
+    #else
+      #somar income dos caregivers.. if > 10k, return true. Senão, false + mensagem específica
+    #end
+  end
+
+  def eligible_employment_status?(child)
+    return Caregiver.find(child.caregiver_id)
+  end
+
+  def eligible?(child)
+    return eligible_age?(child) && eligible_health_plan? && eligible_employment_status?
+  end
+end
+
+class Main
+  def execute
+    maria = Child.new("Maria", 10, true, "Alice")
+    pedro = Caregiver.new(maria, "Jose", 4000, true)
+    regina = Caregiver.new(maria, "Regina", 6000, true)
+
+    puts BusinessRulesValidation.new.eligible_age?(maria)
+    puts BusinessRulesValidation.new.eligible_health_plan?(maria)
+    puts BusinessRulesValidation.new.eligible_employment_status?(maria)
+    puts maria.caregiver_id
+
+    puts "O nome é da criança #{maria.name}. Ela tem #{maria.age} anos e usa o plano
+    #{maria.health_plan}.\nEla possui #{maria.caregivers} cuidadores. Os nomes são: #{}"
+  end
+end
+
+Main.new.execute
