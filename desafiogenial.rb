@@ -1,33 +1,23 @@
 class Child
-  @@id = 1
-  attr_reader :id
-  attr_accessor :name, :age, :diagnosis, :health_plan, :caregivers, :caregiver_id
+  attr_accessor :caregiver1, :caregiver2, :name, :age, :diagnosis, :health_plan
 
-  def initialize(name, age, diagnosis = false, health_plan = nil)
+  def initialize(caregiver1, caregiver2, name, age, diagnosis = false, health_plan = nil)
+    @caregiver1 = caregiver1
+    @caregiver2 = caregiver2
     @name = name
     @age = age
     @diagnosis = diagnosis
     @health_plan = health_plan
-    @caregivers = 0
-    @id = @@id
-    @@id += 1
-    @caregiver_id = []
   end
 end
 
 class Caregiver
-  @@id = 1
-  attr_reader :child_id
   attr_accessor :name, :income, :employed
 
-  def initialize(child, name, income, employed)
-    @child_id = child.id
-    child.caregivers += 1
-    child.caregiver_id << @@id
+  def initialize(name, income, employed)
     @name = name
     @income = income
     @employed = employed
-    @@id += 1
   end
 end
 
@@ -38,39 +28,40 @@ class BusinessRulesValidation
   EMPLOYED_CARETAKERS = 2
 
   def eligible_age?(child)
-    return true if child.age <= MAX_ELIGIBLE_AGE
-    return false
+    child.age <= MAX_ELIGIBLE_AGE
   end
 
   def eligible_health_plan?(child)
-    return true if ELIGIBLE_HEALTH_PLANS.include?(child.health_plan)
-    #else
-      #somar income dos caregivers.. if > 10k, return true. Senão, false + mensagem específica
-    #end
+    ELIGIBLE_HEALTH_PLANS.include?(child.health_plan)
+  end
+
+  def eligible_income_amount?(child)
+    child.caregiver1.income + child.caregiver2.income >= MIN_INCOME
   end
 
   def eligible_employment_status?(child)
-    return Caregiver.find(child.caregiver_id)
+    child.caregiver1.employed && child.caregiver2.employed
   end
 
   def eligible?(child)
-    return eligible_age?(child) && eligible_health_plan? && eligible_employment_status?
+    eligible_age?(child) && 
+    (eligible_health_plan?(child) || (eligible_income_amount?(child) && eligible_employment_status?(child)))
   end
+
 end
 
 class Main
   def execute
-    maria = Child.new("Maria", 10, true, "Alice")
-    pedro = Caregiver.new(maria, "Jose", 4000, true)
-    regina = Caregiver.new(maria, "Regina", 6000, true)
+    pedro = Caregiver.new("Jose", 4000, false)
+    regina = Caregiver.new("Regina", 7000, true)
+    maria = Child.new(pedro, regina, "Maria", 2, true)
 
     puts BusinessRulesValidation.new.eligible_age?(maria)
     puts BusinessRulesValidation.new.eligible_health_plan?(maria)
+    puts BusinessRulesValidation.new.eligible_income_amount?(maria)
     puts BusinessRulesValidation.new.eligible_employment_status?(maria)
-    puts maria.caregiver_id
+    puts BusinessRulesValidation.new.eligible?(maria)
 
-    puts "O nome é da criança #{maria.name}. Ela tem #{maria.age} anos e usa o plano
-    #{maria.health_plan}.\nEla possui #{maria.caregivers} cuidadores. Os nomes são: #{}"
   end
 end
 
