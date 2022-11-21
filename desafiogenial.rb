@@ -25,7 +25,6 @@ class BusinessRulesValidation
   MAX_ELIGIBLE_AGE = 5
   MIN_INCOME = 10000 #in case of particular payment
   ELIGIBLE_HEALTH_PLANS = ["Alice", "GNDI"]
-  EMPLOYED_CARETAKERS = 2
 
   def eligible_age?(child)
     child.age <= MAX_ELIGIBLE_AGE
